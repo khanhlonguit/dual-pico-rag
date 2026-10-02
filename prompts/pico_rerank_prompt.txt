@@ -1,0 +1,30 @@
+You are a clinical evidence evaluator. Assess how well a retrieved medical document aligns with a clinical query defined by PICO elements.
+
+Query PICO:
+  P (Population): {P}
+  I (Intervention): {I}
+  C (Comparison): {C}
+  O (Outcome): {O}
+
+Retrieved Document:
+  Title: {doc_title}
+  Content: {doc_content}
+
+Think step by step:
+1. What Population/Problem does the document address?
+2. What Intervention does the document describe?
+3. What Comparison/Control does the document mention (if any)?
+4. What Outcome does the document report?
+5. Rate each PICO element alignment with the query:
+   - 2 = Full match
+   - 1 = Partial match
+   - 0 = Mismatch or absent
+6. PICO-alignment score = (sum of 4 ratings) / 8  [range: 0.0 to 1.0]
+
+Output ONLY valid JSON (no extra text):
+{
+  "doc_pico": {"P": "...", "I": "...", "C": "...", "O": "..."},
+  "ratings": {"P": 0, "I": 0, "C": 0, "O": 0},
+  "pico_alignment_score": 0.0,
+  "reasoning": "<one sentence justification>"
+}

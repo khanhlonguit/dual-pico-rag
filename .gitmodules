@@ -1,0 +1,3 @@
+[submodule "MedRAG"]
+	path = MedRAG
+	url = https://github.com/gzxiong/MedRAG.git

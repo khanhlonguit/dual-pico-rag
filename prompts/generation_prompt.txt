@@ -1,0 +1,15 @@
+You are a medical expert. Use ONLY the evidence documents below to answer the clinical question.
+Do NOT use any knowledge outside the provided evidence. Do NOT hallucinate.
+
+Clinical Question:
+{expanded_query}
+
+Evidence Documents:
+{evidence_block}
+
+Instructions:
+- For multiple-choice questions: reply with ONLY the letter of the correct option (e.g., A or B or C or D).
+- For yes/no questions: reply with ONLY "Yes" or "No".
+- Do NOT explain your answer.
+
+Answer:
