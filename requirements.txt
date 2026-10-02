@@ -1,13 +1,22 @@
-groq>=0.9.0
-openai>=1.30.0            # also required for Ollama backend (OpenAI-compatible API)
-sentence-transformers>=2.7.0
-faiss-cpu>=1.8.0          # GPU server: conda install -c pytorch -c nvidia faiss-gpu=1.8.0
-                           # or: pip install faiss-gpu-cu12  (CUDA 12.x)
-                           # or: pip install faiss-gpu-cu11  (CUDA 11.x)
-torch>=2.1.0
-transformers>=4.40.0
-datasets>=2.20.0
-python-dotenv>=1.0.0
-tqdm>=4.66.0
-numpy>=1.23.0,<1.24.0     # np.long removed in 1.24 — breaks faiss-cpu and some torch ops
-requests>=2.31.0
+# ── Core ML ───────────────────────────────────────────────────────────────────
+# Install torch FIRST before other packages to avoid numpy conflicts
+# On server with CUDA: pip install torch --index-url https://download.pytorch.org/whl/cu121
+torch==2.3.1
+numpy==1.26.4
+transformers==4.44.2
+sentence-transformers==3.1.0
+
+# ── Vector search ──────────────────────────────────────────────────────────────
+faiss-cpu==1.8.0
+# GPU alternative (CUDA 12.x): pip install faiss-gpu-cu12
+# GPU alternative (conda):     conda install -c pytorch -c nvidia faiss-gpu
+
+# ── LLM APIs ──────────────────────────────────────────────────────────────────
+groq==0.11.0
+openai==1.51.0              # also used for Ollama (OpenAI-compatible API)
+
+# ── Data & utilities ──────────────────────────────────────────────────────────
+datasets==2.21.0
+python-dotenv==1.0.1
+tqdm==4.66.5
+requests==2.32.3
