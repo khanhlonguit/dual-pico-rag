@@ -9,5 +9,5 @@ transformers>=4.40.0
 datasets>=2.20.0
 python-dotenv>=1.0.0
 tqdm>=4.66.0
-numpy>=1.26.0,<2.0.0      # numpy 2.x breaks faiss-cpu and older torch builds
+numpy>=1.23.0,<1.24.0     # np.long removed in 1.24 — breaks faiss-cpu and some torch ops
 requests>=2.31.0
