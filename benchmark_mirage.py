@@ -44,7 +44,7 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
         # Parse the raw answer string to find the first yes/no/maybe
         import re
         match = re.search(r'\b(yes|no|maybe)\b', raw_pred)
-        pred_ans = match.group(1) if match else raw_pred.split()[0] if raw_pred else ""
+        pred_ans = match.group(1) if match else raw_pred
         
         # Evaluate
         is_correct = (true_ans == pred_ans)
