@@ -69,11 +69,14 @@ class MedRAGRetriever:
 
         self._ensure_corpus_downloaded()
 
+        # HNSW=True: approximate index, uses less peak memory during search for large corpora
+        # (PubMed/Wikipedia need ~74 GB RAM with flat index — use HNSW if OOM)
+        use_hnsw = self.corpus_name in ("PubMed", "Wikipedia")
         self._system = RetrievalSystem(
             retriever_name=retriever_name,
             corpus_name=corpus_name,
             db_dir=db_dir,
-            HNSW=False,
+            HNSW=use_hnsw,
             cache=False,
         )
         print("[Retriever] Ready.\n")
@@ -102,9 +105,19 @@ class MedRAGRetriever:
         url = _emb_urls.get((self.corpus_name, retriever_id))
         if not url: return
 
-        index_dir = os.path.join(self._system_db_dir(), self.corpus_name.lower(), "index", retriever_id.replace("/", "_"))
-        if os.path.exists(os.path.join(index_dir, "metadatas.jsonl")):
-            return # Already downloaded
+        db_dir = self._system_db_dir()
+        corpus_dir = os.path.join(db_dir, self.corpus_name.lower())
+        index_root = os.path.join(corpus_dir, "index")
+        index_dir = os.path.join(index_root, retriever_id.replace("Query-Encoder", "Article-Encoder"))
+        legacy_index_dir = os.path.join(index_root, retriever_id.replace("/", "_"))
+
+        for cached_index_dir in (index_dir, legacy_index_dir):
+            if os.path.isfile(os.path.join(cached_index_dir, "faiss.index")):
+                return
+            embedding_dir = os.path.join(cached_index_dir, "embedding")
+            if os.path.isdir(embedding_dir) and any(fname.endswith(".npy") for fname in os.listdir(embedding_dir)):
+                return
+
             
         print("[Downloading] Pre-computed embeddings manually to bypass WAF...")
         os.makedirs(index_dir, exist_ok=True)
