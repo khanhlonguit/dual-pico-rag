@@ -13,7 +13,7 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
     print(f"Loading {dataset_name} dataset...")
     if dataset_name == "pubmedqa":
         # PubMedQA has yes/no/maybe answers
-        ds = load_dataset("pubmedqa", "pqa_labeled", split="train")
+        ds = load_dataset("qiaojin/PubMedQA", "pqa_labeled", split="train")
         # Extract question and answer
         eval_data = []
         for item in ds:
