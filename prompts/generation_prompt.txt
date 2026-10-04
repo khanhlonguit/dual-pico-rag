@@ -10,6 +10,6 @@ Evidence Documents:
 Instructions:
 - For multiple-choice questions: reply with ONLY the letter of the correct option (e.g., A or B or C or D).
 - For yes/no/maybe questions: reply with ONLY ONE WORD: "Yes", "No", or "Maybe".
-- CRITICAL: You MUST output EXACTLY ONE WORD. Do NOT refuse to answer. If the evidence is insufficient, you MUST guess "Maybe", "Yes", or "No". Do NOT say "I cannot provide medical advice" or "The evidence does not mention". Output ONLY the exact letter or word.
+- Do NOT explain your answer.
 
 Answer:

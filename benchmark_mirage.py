@@ -37,14 +37,23 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
         q = item["question"]
         true_ans = item["answer"].lower()
         
-        # Dual-PICO pipeline trả về một dictionary
-        response_dict = rag.run(q)
-        raw_pred = response_dict["answer"].lower()
+        # Cung cấp options rõ ràng để ép LLM trả về A, B, hoặc C
+        options_str = "A. yes\nB. no\nC. maybe"
         
-        # Parse the raw answer string to find the first yes/no/maybe
-        import re
-        match = re.search(r'\b(yes|no|maybe)\b', raw_pred)
-        pred_ans = match.group(1) if match else raw_pred
+        # Dual-PICO pipeline
+        response_dict = rag.run(q, options=options_str)
+        raw_pred = response_dict["answer"].lower().strip()
+        
+        # Llama 3 sẽ trả về A, B, hoặc C (có thể kèm dấu chấm, vd "a.")
+        pred_ans = ""
+        if raw_pred.startswith("a"):
+            pred_ans = "yes"
+        elif raw_pred.startswith("b"):
+            pred_ans = "no"
+        elif raw_pred.startswith("c"):
+            pred_ans = "maybe"
+        else:
+            pred_ans = raw_pred # fallback nếu LLM nói nhảm
         
         # Evaluate
         is_correct = (true_ans == pred_ans)
