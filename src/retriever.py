@@ -69,16 +69,29 @@ class MedRAGRetriever:
 
         self._ensure_corpus_downloaded()
 
-        # HNSW=True: approximate index, uses less peak memory during search for large corpora
-        # (PubMed/Wikipedia need ~74 GB RAM with flat index — use HNSW if OOM)
-        use_hnsw = self.corpus_name in ("PubMed", "Wikipedia")
-        self._system = RetrievalSystem(
-            retriever_name=retriever_name,
-            corpus_name=corpus_name,
-            db_dir=db_dir,
-            HNSW=use_hnsw,
-            cache=False,
-        )
+        # HNSW=False because we want Flat index for fast sequential mmap disk reading
+        import faiss
+        original_read_index = faiss.read_index
+
+        def mmap_read_index(file_path, flags=0):
+            # Force Memory-Mapping (mmap) for large indices to bypass RAM limits
+            print(f"[Retriever] Intercepted faiss.read_index for {file_path}")
+            print(f"[Retriever] -> Forcing MMAP load to save RAM (uses SSD virtual memory)")
+            flags = faiss.IO_FLAG_MMAP | faiss.IO_FLAG_READ_ONLY
+            return original_read_index(file_path, flags)
+
+        faiss.read_index = mmap_read_index
+        try:
+            self._system = RetrievalSystem(
+                retriever_name=retriever_name,
+                corpus_name=corpus_name,
+                db_dir=db_dir,
+                HNSW=False,  # HNSW+mmap is slow due to random IO; Flat+mmap is better
+                cache=False,
+            )
+        finally:
+            faiss.read_index = original_read_index
+            
         print("[Retriever] Ready.\n")
 
     def _ensure_corpus_downloaded(self):
