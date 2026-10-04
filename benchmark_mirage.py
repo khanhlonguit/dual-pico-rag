@@ -39,12 +39,16 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
         
         # Dual-PICO pipeline trả về một dictionary
         response_dict = rag.run(q)
-        pred_ans = response_dict["answer"].lower()
+        raw_pred = response_dict["answer"].lower()
         
-        # Đánh giá đơn giản cho pubmedqa (yes/no/maybe)
-        is_correct = False
-        if true_ans in pred_ans:
-            is_correct = True
+        # Parse the raw answer string to find the first yes/no/maybe
+        import re
+        match = re.search(r'\b(yes|no|maybe)\b', raw_pred)
+        pred_ans = match.group(1) if match else raw_pred.split()[0] if raw_pred else ""
+        
+        # Evaluate
+        is_correct = (true_ans == pred_ans)
+        if is_correct:
             correct += 1
             
         results.append({

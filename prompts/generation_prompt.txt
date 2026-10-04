@@ -9,7 +9,7 @@ Evidence Documents:
 
 Instructions:
 - For multiple-choice questions: reply with ONLY the letter of the correct option (e.g., A or B or C or D).
-- For yes/no questions: reply with ONLY "Yes" or "No".
-- Do NOT explain your answer.
+- For yes/no/maybe questions: reply with ONLY ONE WORD: "Yes", "No", or "Maybe".
+- CRITICAL: Do NOT explain your answer. Do NOT start with "Since..." or "Based on...". Output ONLY the exact letter or word.
 
 Answer:

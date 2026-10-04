@@ -55,5 +55,4 @@ class Generator:
         )
 
         answer = self.llm.generate(prompt, max_tokens=32, temperature=0.0)
-        # Return first whitespace-separated token (e.g. "A" from "A.")
-        return answer.strip().split()[0] if answer.strip() else ""
+        return answer.strip()
