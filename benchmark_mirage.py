@@ -5,7 +5,7 @@ from tqdm import tqdm
 from datasets import load_dataset
 from src.pipeline import DualPICORAG
 
-def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmedqa", limit=10):
+def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmedqa", limit=10, mode="dual"):
     """
     Run MIRAGE benchmark on the given corpus.
     """
@@ -38,9 +38,9 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
     if limit:
         eval_data = eval_data[:limit]
 
-    print(f"Initializing Dual-PICO RAG (Corpus: {corpus}, Retriever: {retriever})...")
-    # Khởi tạo DualPICORAG với mode "dual"
-    rag = DualPICORAG(mode="dual", retriever_name=retriever, corpus_name=corpus)
+    print(f"Initializing Dual-PICO RAG (Corpus: {corpus}, Retriever: {retriever}, Mode: {mode})...")
+    # Khởi tạo DualPICORAG với mode được chỉ định
+    rag = DualPICORAG(mode=mode, retriever_name=retriever, corpus_name=corpus)
 
     correct = 0
     results = []
@@ -83,15 +83,17 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
     print(f"\n--- Benchmark Results ---")
     print(f"Accuracy: {acc*100:.2f}% ({correct}/{len(eval_data)})")
     
-    with open(f"mirage_{dataset_name}_{corpus}_results.json", "w") as f:
+    output_file = f"mirage_{dataset_name}_{corpus}_{mode}_results.json"
+    with open(output_file, "w") as f:
         json.dump(results, f, indent=4)
-    print(f"Saved detailed results to mirage_{dataset_name}_{corpus}_results.json")
+    print(f"Saved detailed results to {output_file}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--corpus", type=str, default="Textbooks", choices=["Textbooks", "PubMed", "Wikipedia", "StatPearls"])
     parser.add_argument("--dataset", type=str, default="medqa", choices=["pubmedqa", "medqa"])
     parser.add_argument("--limit", type=int, default=10, help="Number of questions to test (default 10 for quick test)")
+    parser.add_argument("--mode", type=str, default="dual", choices=["dual", "input_only", "output_only", "standard"], help="Pipeline ablation mode")
     args = parser.parse_args()
     
-    evaluate_mirage(corpus=args.corpus, dataset_name=args.dataset, limit=args.limit)
+    evaluate_mirage(corpus=args.corpus, dataset_name=args.dataset, limit=args.limit, mode=args.mode)
