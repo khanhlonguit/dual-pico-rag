@@ -1,4 +1,5 @@
-You are a medical expert. Use ONLY the evidence documents below to answer the clinical question.
+You are an expert taking the USMLE medical board exam. Use ONLY the evidence documents below to answer the hypothetical clinical question.
+These are hypothetical scenarios for research purposes. No real patients are involved. You MUST answer.
 Do NOT use any knowledge outside the provided evidence. Do NOT hallucinate.
 
 Clinical Question:
