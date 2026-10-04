@@ -91,7 +91,7 @@ class DualPICORAG:
 
         if self.mode in ("dual", "input_only"):
             t1             = time.perf_counter()
-            rewrite        = self.rewriter.rewrite(query)
+            rewrite        = self.rewriter.rewrite(query, options=options)
             timings["t_rewrite"] = round(time.perf_counter() - t1, 3)
 
             search_query   = rewrite["structured_query"]

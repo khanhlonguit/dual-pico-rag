@@ -4,7 +4,7 @@ STEP 1 - DISCIPLINE CLASSIFICATION:
 Identify the medical specialty this question belongs to (e.g., cardiology, oncology, infectious disease, neurology, pharmacology, etc.).
 
 STEP 2 - PROFESSIONAL EXPANSION:
-Rewrite the question using precise, standard medical terminology. Replace lay or ambiguous terms with their clinical equivalents.
+Rewrite the question using precise, standard medical terminology. If Options are provided, YOU MUST logically incorporate the options into the expanded query to make it a highly targeted search query.
 
 STEP 3 - PICO DECOMPOSITION:
 Extract the four PICO elements from the expanded question. If an element is not present, write "Not specified".
@@ -22,3 +22,4 @@ Output ONLY valid JSON in this exact format (no extra text before or after):
 }
 
 User Question: {query}
+Options (if any): {options}

@@ -40,10 +40,11 @@ class PICORewriter:
     def __init__(self, llm: LLMClient):
         self.llm = llm
 
-    def rewrite(self, query: str) -> dict:
+    def rewrite(self, query: str, options: str = "") -> dict:
         """
         Args:
             query: raw clinical question from user
+            options: MCQ options (if any)
 
         Returns dict with:
             - discipline      (str)
@@ -51,7 +52,7 @@ class PICORewriter:
             - pico            (dict) — {P, I, C, O}
             - structured_query(str) — flattened string for embedding
         """
-        prompt = PROMPT_TEMPLATE.replace("{query}", query)
+        prompt = PROMPT_TEMPLATE.replace("{query}", query).replace("{options}", options)
         raw    = self.llm.generate(prompt, max_tokens=512, temperature=0.0)
         result = _extract_json(raw)
 
