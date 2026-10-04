@@ -80,12 +80,23 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
         })
         
     acc = correct / len(eval_data)
+    incorrect = len(eval_data) - correct
     print(f"\n--- Benchmark Results ---")
-    print(f"Accuracy: {acc*100:.2f}% ({correct}/{len(eval_data)})")
+    print(f"Accuracy: {acc*100:.2f}% (Correct: {correct} | Incorrect: {incorrect} | Total: {len(eval_data)})")
+    
+    summary = {
+        "metrics": {
+            "total_questions": len(eval_data),
+            "correct": correct,
+            "incorrect": incorrect,
+            "accuracy_percent": round(acc * 100, 2)
+        },
+        "details": results
+    }
     
     output_file = f"mirage_{dataset_name}_{corpus}_{mode}_results.json"
     with open(output_file, "w") as f:
-        json.dump(results, f, indent=4)
+        json.dump(summary, f, indent=4)
     print(f"Saved detailed results to {output_file}")
 
 if __name__ == "__main__":
