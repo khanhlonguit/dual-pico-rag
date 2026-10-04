@@ -27,8 +27,8 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
         eval_data = eval_data[:limit]
 
     print(f"Initializing Dual-PICO RAG (Corpus: {corpus}, Retriever: {retriever})...")
-    # Tự động chọn standard mode nếu muốn so sánh, ở đây mặc định chạy dual
-    rag = DualPICORAG(retriever_name=retriever, corpus_name=corpus)
+    # Khởi tạo DualPICORAG với mode "dual"
+    rag = DualPICORAG(mode="dual", retriever_name=retriever, corpus_name=corpus)
 
     correct = 0
     results = []
@@ -37,9 +37,9 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
         q = item["question"]
         true_ans = item["answer"].lower()
         
-        # Dual-PICO pipeline
-        response = rag.run(q, ablation_mode="dual")
-        pred_ans = response.lower()
+        # Dual-PICO pipeline trả về một dictionary
+        response_dict = rag.run(q)
+        pred_ans = response_dict["answer"].lower()
         
         # Đánh giá đơn giản cho pubmedqa (yes/no/maybe)
         is_correct = False
