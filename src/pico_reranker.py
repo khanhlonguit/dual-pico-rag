@@ -1,94 +1,77 @@
 """
-pico_reranker.py — Stage 3: PICO-Supported Re-ranking via Chain-of-Thought (LLM Call #2)
+pico_reranker.py — Stage 3: PICO-Supported Re-ranking via MedCPT Cross-Encoder
 
-For each of the top-15 retrieved candidates:
-  1. Extract PICO elements from the document (CoT)
-  2. Compare element-by-element with the query's PICO
-  3. Assign a PICO-alignment score (0.0 – 1.0)
-  4. Combine with retrieval cosine similarity
-  5. Return top-3 most clinically aligned documents
+This replaces the slow, unstable LLM-based CoT reranker with the state-of-the-art
+ncbi/MedCPT-Cross-Encoder. It receives the PICO-structured query and scores 
+the top retrieved candidates directly using the cross-encoder logic.
 """
-import json
-import re
-from pathlib import Path
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from src.llm import LLMClient
 
-PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "pico_rerank_prompt.txt"
-PROMPT_TEMPLATE = PROMPT_PATH.read_text(encoding="utf-8")
-
-# Combination weights (α · retrieval_score + β · pico_alignment_score)
-ALPHA = 0.5
-BETA  = 0.5
-
-
-def _extract_json(text: str) -> dict:
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        match = re.search(r"\{.*\}", text, re.DOTALL)
-        if match:
-            try:
-                return json.loads(match.group())
-            except json.JSONDecodeError:
-                pass
-    return {}
-
-
 class PICOReranker:
-    """Re-ranks retrieved documents by PICO alignment using CoT prompting."""
+    """Re-ranks retrieved documents using the MedCPT Cross-Encoder, guided by the PICO-structured query."""
 
     def __init__(self, llm: LLMClient):
-        self.llm = llm
+        # The 'llm' argument is kept for compatibility with pipeline.py but unused.
+        self.model_name = "ncbi/MedCPT-Cross-Encoder"
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"[Reranker] Loading {self.model_name} on {self.device}...")
+        
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name).to(self.device)
+        self.model.eval()
 
-    def _score_one(self, query_pico: dict, doc: dict) -> dict:
-        """Score a single document against the query PICO."""
-        prompt = (
-            PROMPT_TEMPLATE
-            .replace("{P}", query_pico.get("P", "Not specified"))
-            .replace("{I}", query_pico.get("I", "Not specified"))
-            .replace("{C}", query_pico.get("C", "Not specified"))
-            .replace("{O}", query_pico.get("O", "Not specified"))
-            .replace("{doc_title}",   doc.get("title",   "")[:200])
-            .replace("{doc_content}", doc.get("content", "")[:1200])
-        )
-        raw    = self.llm.generate(prompt, max_tokens=400, temperature=0.0)
-        result = _extract_json(raw)
-        return result
-
-    def rerank(self, query_pico: dict, candidates: list[dict],
-               top_k: int = 3) -> list[dict]:
+    def rerank(self, structured_query: str, candidates: list[dict], top_k: int = 3) -> list[dict]:
         """
         Args:
-            query_pico:  {P, I, C, O} from Stage 1 rewriting
-            candidates:  top-15 docs from retriever (each has 'retrieval_score')
-            top_k:       number of docs to keep (paper uses 3)
+            structured_query: The flattened PICO query string from Stage 1
+            candidates:       top docs from retriever (each has 'title' and 'content')
+            top_k:            number of docs to keep
 
-        Returns: top_k docs sorted by combined score, each with extra fields:
-            - pico_alignment_score
-            - combined_score
-            - pico_reasoning
+        Returns: top_k docs sorted by cross-encoder score.
         """
+        if not candidates:
+            return []
+
+        # Format pairs for cross-encoder: [query, title + "[SEP]" + content]
+        pairs = []
+        for doc in candidates:
+            title = doc.get("title", "")
+            content = doc.get("content", "")
+            # MedCPT uses title + [SEP] + abstract format
+            doc_text = f"{title}[SEP]{content}"
+            pairs.append([structured_query, doc_text])
+
+        # Inference
+        with torch.no_grad():
+            encoded = self.tokenizer(
+                pairs,
+                truncation=True,
+                padding=True,
+                return_tensors="pt",
+                max_length=512,
+            ).to(self.device)
+            
+            logits = self.model(**encoded).logits.squeeze(-1)
+            
+            # Convert to list. If only one candidate, logits might be a scalar
+            if logits.dim() == 0:
+                scores = [logits.item()]
+            else:
+                scores = logits.cpu().numpy().tolist()
+
         scored = []
-        for i, doc in enumerate(candidates):
-            result   = self._score_one(query_pico, doc)
-            pa_score = float(result.get("pico_alignment_score", 0.0))
-            # Clamp to [0, 1]
-            pa_score = max(0.0, min(1.0, pa_score))
-
-            combined = (ALPHA * doc.get("retrieval_score", 0.0)
-                        + BETA  * pa_score)
-
+        for i, (doc, score) in enumerate(zip(candidates, scores)):
             doc = doc.copy()
-            doc["pico_alignment_score"] = pa_score
-            doc["combined_score"]       = combined
-            doc["pico_reasoning"]       = result.get("reasoning", "")
-            doc["doc_pico"]             = result.get("doc_pico", {})
+            doc["cross_encoder_score"] = float(score)
+            doc["combined_score"] = float(score)  # Pure Cross-Encoder sorting
             scored.append(doc)
-
+            
             print(f"  [Reranker] Doc {i+1:>2}/{len(candidates)} "
-                  f"| retrieval={doc['retrieval_score']:.3f} "
-                  f"| PICO={pa_score:.3f} "
-                  f"| combined={combined:.3f}")
+                  f"| retrieval={doc.get('retrieval_score', 0.0):.3f} "
+                  f"| cross-encoder={score:.3f}")
 
+        # Sort by cross-encoder score descending
         scored.sort(key=lambda d: d["combined_score"], reverse=True)
         return scored[:top_k]

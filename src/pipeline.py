@@ -129,15 +129,15 @@ class DualPICORAG:
             if self.verbose:
                 print(f"\n[Stage 3] PICO Re-ranking {len(candidates)} candidates...")
 
-            # output_only: rewriting was skipped, so extract PICO now
-            if query_pico is None:
-                rewrite        = self.rewriter.rewrite(query)
+            if search_query == query: # For output_only, we need to generate the structured query
+                rewrite        = self.rewriter.rewrite(query, options=options)
                 query_pico     = rewrite["pico"]
                 expanded_query = rewrite["expanded_query"]
+                search_query   = rewrite["structured_query"]
 
             t3       = time.perf_counter()
             top_docs = self.reranker.rerank(
-                query_pico, candidates, top_k=self.top_k_rank
+                search_query, candidates, top_k=self.top_k_rank
             )
             timings["t_reranking"] = round(time.perf_counter() - t3, 3)
         else:
