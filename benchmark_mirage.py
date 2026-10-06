@@ -102,7 +102,7 @@ def evaluate_mirage(corpus="Textbooks", retriever="MedCPT", dataset_name="pubmed
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--corpus", type=str, default="Textbooks", choices=["Textbooks", "PubMed", "Wikipedia", "StatPearls"])
-    parser.add_argument("--dataset", type=str, default="medqa", choices=["pubmedqa", "medqa"])
+    parser.add_argument("--dataset", type=str, default="pubmedqa", choices=["pubmedqa", "medqa"])
     parser.add_argument("--limit", type=int, default=10, help="Number of questions to test (default 10 for quick test)")
     parser.add_argument("--mode", type=str, default="dual", choices=["dual", "input_only", "output_only", "standard"], help="Pipeline ablation mode")
     args = parser.parse_args()
